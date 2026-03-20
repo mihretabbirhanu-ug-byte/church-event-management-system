@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+  VOLUNTEER
+}
+
+enum TaskStatus {
+  PENDING
+  DONE
+  CLOSED
+}
+
+enum AttendanceStatus {
+  NOT_MARKED
+  PRESENT
+}
+
+model User {
+  id       String @id @default(uuid())
+  fullName String
+  phone    String
+  email    String @unique
+  password String
+  role     Role
+
+  createdEvents   Event[]          @relation("EventCreator")
+  registrations   Registration[]
+  taskAssignments TaskAssignment[]
+  taskUpdates     TaskUpdate[]
+  notes           EventNote[]
+  tasks           Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+
+  createdById String
+  createdBy   User   @relation("EventCreator", fields: [createdById], references: [id])
+
+  registrations Registration[]
+  tasks         Task[]
+  goals         EventGoal[]
+  notes         EventNote[]
+  inviteLinks   EventInviteLink[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EventInviteLink {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  expiresAt DateTime?
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Registration {
+  id               String           @id @default(uuid())
+  ticketNumber     String           @unique
+  attendanceStatus AttendanceStatus @default(NOT_MARKED)
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  registeredAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  deadline    DateTime?
+  status      TaskStatus @default(PENDING)
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  assignments TaskAssignment[]
+  updates     TaskUpdate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TaskAssignment {
+  id String @id @default(uuid())
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+}
+
+model TaskUpdate {
+  id      String @id @default(uuid())
+  message String
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model EventGoal {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model EventNote {
+  id      String @id @default(uuid())
+  content String
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}

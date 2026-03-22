@@ -1,13 +1,17 @@
- "use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { fetchJson } from "@/lib/api";
+import { setToken, setUser } from "@/lib/auth";
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
@@ -30,12 +34,31 @@ export default function SignInPage() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validate()) {
       return;
     }
-    router.push("/");
+    setSubmitting(true);
+    setFormError("");
+    try {
+      const data = await fetchJson<{ access_token: string; user: any }>(
+        "/auth/login",
+        {
+          method: "POST",
+          body: { email, password },
+        }
+      );
+      setToken(data.access_token);
+      setUser(data.user);
+      router.push("/events");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to sign in.";
+      setFormError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -56,6 +79,11 @@ export default function SignInPage() {
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+            {formError ? (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {formError}
+              </div>
+            ) : null}
             <label className="block text-sm font-medium text-zinc-700">
               Email
               <input
@@ -111,9 +139,10 @@ export default function SignInPage() {
 
             <button
               type="submit"
-              className="flex h-12 w-full items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              className="flex h-12 w-full items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={submitting}
             >
-              Sign in
+              {submitting ? "Signing in..." : "Sign in"}
             </button>
           </form>
 

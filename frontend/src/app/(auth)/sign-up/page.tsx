@@ -3,15 +3,20 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { fetchJson } from "@/lib/api";
 
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
   const [errors, setErrors] = useState<{
     name?: string;
+    phone?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
@@ -20,6 +25,7 @@ export default function SignUpPage() {
   const validate = () => {
     const nextErrors: {
       name?: string;
+      phone?: string;
       email?: string;
       password?: string;
       confirmPassword?: string;
@@ -27,6 +33,10 @@ export default function SignUpPage() {
 
     if (!name.trim()) {
       nextErrors.name = "Full name is required.";
+    }
+
+    if (!phone.trim()) {
+      nextErrors.phone = "Phone number is required.";
     }
 
     if (!email.trim()) {
@@ -51,12 +61,32 @@ export default function SignUpPage() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validate()) {
       return;
     }
-    router.push("/sign-in");
+    setSubmitting(true);
+    setFormError("");
+    try {
+      await fetchJson("/auth/register", {
+        method: "POST",
+        body: {
+          fullName: name,
+          phone,
+          email,
+          password,
+          role: "MEMBER",
+        },
+      });
+      router.push("/sign-in");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to create account.";
+      setFormError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -73,6 +103,11 @@ export default function SignUpPage() {
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+            {formError ? (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {formError}
+              </div>
+            ) : null}
             <label className="block text-sm font-medium text-zinc-700">
               Full name
               <input
@@ -87,6 +122,24 @@ export default function SignUpPage() {
               {errors.name ? (
                 <span className="mt-2 block text-xs text-rose-600">
                   {errors.name}
+                </span>
+              ) : null}
+            </label>
+
+            <label className="block text-sm font-medium text-zinc-700">
+              Phone number
+              <input
+                type="tel"
+                name="phone"
+                placeholder="09xx xxx xxx"
+                autoComplete="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+              />
+              {errors.phone ? (
+                <span className="mt-2 block text-xs text-rose-600">
+                  {errors.phone}
                 </span>
               ) : null}
             </label>
@@ -172,9 +225,10 @@ export default function SignUpPage() {
 
             <button
               type="submit"
-              className="flex h-12 w-full items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              className="flex h-12 w-full items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={submitting}
             >
-              Create account
+              {submitting ? "Creating account..." : "Create account"}
             </button>
           </form>
 

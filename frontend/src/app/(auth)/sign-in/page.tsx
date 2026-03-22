@@ -51,7 +51,13 @@ export default function SignInPage() {
       );
       setToken(data.access_token);
       setUser(data.user);
-      router.push("/events");
+      if (data.user?.role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else if (data.user?.role === "VOLUNTEER") {
+        router.push("/tasks");
+      } else {
+        router.push("/events");
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to sign in.";

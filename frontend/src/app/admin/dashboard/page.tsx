@@ -34,9 +34,9 @@ const tasks = [
 ];
 
 const quickActions = [
-  { label: "Create event", description: "Add a new church event.", href: "/events/new" },
+  { label: "Create event", description: "Add a new church event.", href: "/admin/events" },
+  { label: "Manage users", description: "Assign volunteer roles.", href: "/admin/users" },
   { label: "Invite volunteers", description: "Send invite links.", href: "/event-invite-links" },
-  { label: "Assign tasks", description: "Delegate tasks quickly.", href: "/tasks" },
   { label: "Review registrations", description: "Track attendance status.", href: "/registrations" },
 ];
 

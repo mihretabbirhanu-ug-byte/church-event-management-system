@@ -19,6 +19,7 @@ export default function VolunteersPage() {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const token = getToken();
@@ -65,6 +66,18 @@ export default function VolunteersPage() {
           </Link>
         </header>
 
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            Search volunteers
+          </label>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by name, email, or phone"
+            className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          />
+        </div>
+
         {loading ? (
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
             Loading volunteers...
@@ -79,7 +92,17 @@ export default function VolunteersPage() {
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
-            {volunteers.map((volunteer) => (
+            {volunteers
+              .filter((volunteer) => {
+                const q = query.trim().toLowerCase();
+                if (!q) return true;
+                return (
+                  volunteer.fullName.toLowerCase().includes(q) ||
+                  volunteer.email.toLowerCase().includes(q) ||
+                  volunteer.phone.toLowerCase().includes(q)
+                );
+              })
+              .map((volunteer) => (
               <div
                 key={volunteer.id}
                 className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"

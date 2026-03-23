@@ -32,6 +32,7 @@ export default function EventNotesPage() {
   const [editContent, setEditContent] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -142,6 +143,28 @@ export default function EventNotesPage() {
       setError(message);
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const deleteNote = async (id: string) => {
+    const token = getToken();
+    if (!token) {
+      return;
+    }
+    setDeletingId(id);
+    setError("");
+    try {
+      await fetchJson(`/event-notes/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setItems((prev) => prev.filter((note) => note.id !== id));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to delete note.";
+      setError(message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -263,13 +286,23 @@ export default function EventNotesPage() {
                       {new Date(note.createdAt).toLocaleString()}
                     </p>
                     {currentRole === "ADMIN" ? (
-                      <button
-                        type="button"
-                        onClick={() => startEdit(note)}
-                        className="mt-3 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
-                      >
-                        Edit
-                      </button>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(note)}
+                          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteNote(note.id)}
+                          disabled={deletingId === note.id}
+                          className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          {deletingId === note.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
                     ) : null}
                   </>
                 )}

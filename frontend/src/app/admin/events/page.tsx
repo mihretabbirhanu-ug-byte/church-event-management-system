@@ -26,6 +26,13 @@ export default function AdminEventsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const loadEvents = async (token: string) => {
     const data = await fetchJson<EventItem[]>("/events", {
@@ -117,6 +124,57 @@ export default function AdminEventsPage() {
       const message =
         err instanceof Error ? err.message : "Unable to delete event.";
       setError(message);
+    }
+  };
+
+  const startEdit = (event: EventItem) => {
+    setEditingId(event.id);
+    setEditTitle(event.title);
+    setEditDescription(event.description ?? "");
+    setEditLocation(event.location ?? "");
+    setEditStartDate(event.startDate.slice(0, 16));
+    setEditEndDate(event.endDate ? event.endDate.slice(0, 16) : "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditDescription("");
+    setEditLocation("");
+    setEditStartDate("");
+    setEditEndDate("");
+  };
+
+  const saveEdit = async () => {
+    const token = getToken();
+    if (!token || !editingId) {
+      return;
+    }
+    setSavingEdit(true);
+    setError("");
+    try {
+      await fetchJson(`/events/${editingId}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        body: {
+          title: editTitle,
+          description: editDescription || null,
+          location: editLocation || null,
+          startDate: new Date(editStartDate).toISOString(),
+          endDate: editEndDate ? new Date(editEndDate).toISOString() : null,
+        },
+      });
+      const refreshed = await fetchJson<EventItem[]>("/events", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEvents(refreshed);
+      cancelEdit();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to update event.";
+      setError(message);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -217,25 +275,86 @@ export default function AdminEventsPage() {
                 key={event.id}
                 className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-lg font-semibold text-zinc-900">
-                      {event.title}
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-600">
-                      {event.description || "No description provided."}
-                    </p>
-                    <p className="mt-2 text-xs text-zinc-500">
-                      Starts: {new Date(event.startDate).toLocaleString()}
-                    </p>
+                {editingId === event.id ? (
+                  <div className="space-y-3">
+                    <input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="min-h-[80px] w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                    <input
+                      value={editLocation}
+                      onChange={(e) => setEditLocation(e.target.value)}
+                      placeholder="Location"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <input
+                        type="datetime-local"
+                        value={editStartDate}
+                        onChange={(e) => setEditStartDate(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                      />
+                      <input
+                        type="datetime-local"
+                        value={editEndDate}
+                        onChange={(e) => setEditEndDate(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveEdit}
+                        disabled={savingEdit}
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {savingEdit ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(event.id)}
-                    className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-                  >
-                    Delete
-                  </button>
-                </div>
+                ) : (
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <Link
+                        href={`/events/${event.id}`}
+                        className="text-lg font-semibold text-zinc-900 hover:text-emerald-700"
+                      >
+                        {event.title}
+                      </Link>
+                      <p className="mt-1 text-sm text-zinc-600">
+                        {event.description || "No description provided."}
+                      </p>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Starts: {new Date(event.startDate).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => startEdit(event)}
+                        className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

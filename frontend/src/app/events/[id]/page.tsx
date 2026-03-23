@@ -15,6 +15,7 @@ type EventDetail = {
   location?: string | null;
   registrations: { id: string; user: { id: string; fullName: string } }[];
   tasks: { id: string; title: string; status: string }[];
+  goals: { id: string; title: string; description?: string | null }[];
   notes: { id: string; content: string; user: { fullName: string } }[];
 };
 
@@ -110,10 +111,10 @@ export default function EventDetailPage() {
             </h1>
           </div>
           <Link
-            href="/events"
+            href={currentRole === "ADMIN" ? "/admin/events" : "/events"}
             className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
           >
-            Back to events
+            {currentRole === "ADMIN" ? "Back to admin events" : "Back to events"}
           </Link>
         </header>
 
@@ -181,6 +182,26 @@ export default function EventDetailPage() {
                     <p key={task.id}>
                       {task.title} · {task.status}
                     </p>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-zinc-900">Goals</h2>
+              {event.goals.length === 0 ? (
+                <p className="mt-3 text-sm text-zinc-600">
+                  No goals added.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-2 text-sm text-zinc-700">
+                  {event.goals.map((goal) => (
+                    <div key={goal.id}>
+                      <p className="font-semibold">{goal.title}</p>
+                      {goal.description ? (
+                        <p className="text-xs text-zinc-600">{goal.description}</p>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               )}

@@ -274,7 +274,7 @@ export default function TasksPage() {
               <textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                className="mt-2 min-h-[90px] w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                className="mt-2 min-h-22.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
               />
             </label>
             <label className="text-sm font-medium text-zinc-700">
@@ -329,7 +329,7 @@ export default function TasksPage() {
                     <textarea
                       value={editDescription}
                       onChange={(event) => setEditDescription(event.target.value)}
-                      className="min-h-[80px] w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                      className="min-h-20 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
                     />
                     <div className="grid gap-3 md:grid-cols-2">
                       <input

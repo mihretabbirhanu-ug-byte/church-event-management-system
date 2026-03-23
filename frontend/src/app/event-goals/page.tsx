@@ -34,6 +34,7 @@ export default function EventGoalsPage() {
   const [editDescription, setEditDescription] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -148,6 +149,28 @@ export default function EventGoalsPage() {
       setError(message);
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const deleteGoal = async (id: string) => {
+    const token = getToken();
+    if (!token) {
+      return;
+    }
+    setDeletingId(id);
+    setError("");
+    try {
+      await fetchJson(`/event-goals/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setItems((prev) => prev.filter((goal) => goal.id !== id));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to delete goal.";
+      setError(message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -284,13 +307,23 @@ export default function EventGoalsPage() {
                       {new Date(goal.createdAt).toLocaleString()}
                     </p>
                     {currentRole === "ADMIN" ? (
-                      <button
-                        type="button"
-                        onClick={() => startEdit(goal)}
-                        className="mt-3 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
-                      >
-                        Edit
-                      </button>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(goal)}
+                          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteGoal(goal.id)}
+                          disabled={deletingId === goal.id}
+                          className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          {deletingId === goal.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
                     ) : null}
                   </>
                 )}

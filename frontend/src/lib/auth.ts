@@ -3,6 +3,7 @@ type StoredUser = {
   email: string;
   fullName: string;
   phone: string;
+  avatarUrl?: string | null;
   role: "ADMIN" | "MEMBER" | "VOLUNTEER";
 };
 

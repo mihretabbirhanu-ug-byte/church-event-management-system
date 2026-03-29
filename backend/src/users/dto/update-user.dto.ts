@@ -10,6 +10,10 @@ export class UpdateUserDto {
   @IsOptional()
   phone?: string;
 
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string | null;
+
   @IsEmail()
   @IsOptional()
   email?: string;

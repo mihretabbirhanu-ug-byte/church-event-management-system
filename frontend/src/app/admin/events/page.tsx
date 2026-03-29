@@ -10,6 +10,7 @@ type EventItem = {
   id: string;
   title: string;
   description?: string | null;
+  imageUrl?: string | null;
   startDate: string;
   endDate?: string | null;
   location?: string | null;
@@ -22,6 +23,7 @@ export default function AdminEventsPage() {
   const [error, setError] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [location, setLocation] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -29,6 +31,7 @@ export default function AdminEventsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
@@ -86,6 +89,7 @@ export default function AdminEventsPage() {
         body: {
           title,
           description: description || null,
+          imageUrl: imageUrl || null,
           location: location || null,
           startDate: new Date(startDate).toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
@@ -94,6 +98,7 @@ export default function AdminEventsPage() {
       });
       setTitle("");
       setDescription("");
+      setImageUrl("");
       setLocation("");
       setStartDate("");
       setEndDate("");
@@ -131,6 +136,7 @@ export default function AdminEventsPage() {
     setEditingId(event.id);
     setEditTitle(event.title);
     setEditDescription(event.description ?? "");
+    setEditImageUrl(event.imageUrl ?? "");
     setEditLocation(event.location ?? "");
     setEditStartDate(event.startDate.slice(0, 16));
     setEditEndDate(event.endDate ? event.endDate.slice(0, 16) : "");
@@ -140,6 +146,7 @@ export default function AdminEventsPage() {
     setEditingId(null);
     setEditTitle("");
     setEditDescription("");
+    setEditImageUrl("");
     setEditLocation("");
     setEditStartDate("");
     setEditEndDate("");
@@ -159,6 +166,7 @@ export default function AdminEventsPage() {
         body: {
           title: editTitle,
           description: editDescription || null,
+          imageUrl: editImageUrl || null,
           location: editLocation || null,
           startDate: new Date(editStartDate).toISOString(),
           endDate: editEndDate ? new Date(editEndDate).toISOString() : null,
@@ -227,6 +235,15 @@ export default function AdminEventsPage() {
             </label>
           </div>
           <label className="text-sm font-medium text-zinc-700">
+            Event image URL
+            <input
+              value={imageUrl}
+              onChange={(event) => setImageUrl(event.target.value)}
+              className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+              placeholder="https://example.com/event-image.jpg"
+            />
+          </label>
+          <label className="text-sm font-medium text-zinc-700">
             Description
             <textarea
               value={description}
@@ -288,6 +305,12 @@ export default function AdminEventsPage() {
                       className="min-h-[80px] w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
                     />
                     <input
+                      value={editImageUrl}
+                      onChange={(e) => setEditImageUrl(e.target.value)}
+                      placeholder="Event image URL"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    />
+                    <input
                       value={editLocation}
                       onChange={(e) => setEditLocation(e.target.value)}
                       placeholder="Location"
@@ -326,6 +349,13 @@ export default function AdminEventsPage() {
                 ) : (
                   <div className="flex items-start justify-between">
                     <div>
+                      {event.imageUrl ? (
+                        <img
+                          src={event.imageUrl}
+                          alt={event.title}
+                          className="mb-3 h-32 w-full rounded-lg object-cover"
+                        />
+                      ) : null}
                       <Link
                         href={`/events/${event.id}`}
                         className="text-lg font-semibold text-zinc-900 hover:text-emerald-700"

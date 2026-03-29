@@ -21,6 +21,7 @@ export interface User {
   id: string;
   fullName: string;
   phone: string;
+  avatarUrl?: string | null;
   email: string;
   password: string;
   role: Role;
@@ -38,6 +39,7 @@ export interface Event {
   id: string;
   title: string;
   description?: string;
+  imageUrl?: string | null;
   startDate: Date;
   endDate?: Date;
   location?: string;
@@ -130,6 +132,7 @@ export namespace Prisma {
   export interface UserCreateInput {
     fullName: string;
     phone: string;
+    avatarUrl?: string | null;
     email: string;
     password: string;
     role: Role;
@@ -144,6 +147,7 @@ export namespace Prisma {
   export interface UserUpdateInput {
     fullName?: string;
     phone?: string;
+    avatarUrl?: string | null;
     email?: string;
     password?: string;
     role?: Role;
@@ -152,6 +156,7 @@ export namespace Prisma {
   export interface EventCreateInput {
     title: string;
     description?: string;
+    imageUrl?: string | null;
     startDate: Date;
     endDate?: Date;
     location?: string;
@@ -166,6 +171,7 @@ export namespace Prisma {
   export interface EventUpdateInput {
     title?: string;
     description?: string;
+    imageUrl?: string | null;
     startDate?: Date;
     endDate?: Date;
     location?: string;

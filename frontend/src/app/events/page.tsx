@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchJson } from "@/lib/api";
 import { clearAuth, getToken, getUser } from "@/lib/auth";
 import Link from "next/link";
@@ -17,6 +17,26 @@ type EventItem = {
   registrations?: { id: string; userId: string }[];
 };
 
+function InfoRow({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm text-slate-700">
+      <span className="text-slate-600">{icon}</span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
+
+
+
+
+
 export default function EventsPage() {
   const router = useRouter();
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -24,13 +44,25 @@ export default function EventsPage() {
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
 
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+
+
+  
   useEffect(() => {
     const token = getToken();
     if (!token) {
       router.push("/sign-in");
       return;
     }
+
+    const user = getUser();
+    setCurrentRole(user?.role ?? null);
+    setCurrentUserId(user?.id ?? null);
 
     const load = async () => {
       try {
@@ -54,15 +86,6 @@ export default function EventsPage() {
     clearAuth();
     router.push("/sign-in");
   };
-
-  const [currentRole, setCurrentRole] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const user = getUser();
-    setCurrentRole(user?.role ?? null);
-    setCurrentUserId(user?.id ?? null);
-  }, []);
 
   const isRegistered = (event: EventItem) => {
     if (!currentUserId || !event.registrations) {
@@ -142,18 +165,61 @@ export default function EventsPage() {
     }
   };
 
+  const filteredEvents = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+    const sourceEvents =
+      activeTab === "mine" ? events.filter((event) => isRegistered(event)) : events;
+
+    if (!query) {
+      return sourceEvents;
+    }
+
+    return sourceEvents.filter((event) => {
+      const haystack = [
+        event.title,
+        event.description ?? "",
+        event.location ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [activeTab, events, searchText, currentUserId]);
+
+  const myEventsCount = useMemo(() => {
+    return events.filter((event) => isRegistered(event)).length;
+  }, [events, currentUserId]);
+
   return (
-    <div className="min-h-full bg-zinc-50 px-4 py-10 sm:px-6 lg:px-12">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-full bg-zinc-50">
+      <div className="fixed inset-x-0 top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-328 items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">
-              Events
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-              YOUR EVENTS
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white">
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="7" y1="10" x2="17" y2="10" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-2xl font-semibold leading-tight text-zinc-900">
+                  Church Events
+                </p>
+                <p className="text-sm text-zinc-500">Community Event Portal</p>
+              </div>
+            </div>
           </div>
+
+
+          
           <div className="flex flex-wrap gap-3">
             <Link
               href="/me"
@@ -168,11 +234,109 @@ export default function EventsPage() {
               Sign out
             </button>
           </div>
+        </div>
+      </div>
+
+
+
+
+
+
+
+
+
+
+      <div className="mx-auto flex w-full max-w-328 flex-col gap-8 px-4 pb-10 pt-28 sm:px-6 lg:px-8">
+        <header className="space-y-5">
+          <div>
+            <h1 className="text-4xl font-semibold tracking-tight text-zinc-900">
+              Upcoming Church Events
+            </h1>
+            <p className="mt-2 text-xl text-zinc-600">
+              Discover and register for exciting events happening at your church.
+            </p>
+          </div>
+
+          <div className="inline-flex rounded-2xl border border-zinc-200 bg-zinc-100 p-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "all"
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-900"
+              }`}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="7" y1="12" x2="17" y2="12" />
+                <line x1="10" y1="18" x2="14" y2="18" />
+              </svg>
+              All Events
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("mine")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "mine"
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-900"
+              }`}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              {`My Events (${myEventsCount})`}
+            </button>
+          </div>
         </header>
 
+        <div className="relative">
+          <svg
+            className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Search events..."
+            className="h-12 w-full rounded-xl border border-zinc-200 bg-white pl-12 pr-4 text-sm text-zinc-900 outline-none ring-emerald-200 transition focus:ring-2"
+          />
+        </div>
+
         {loading ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-            Loading events...
+          <div className="grid gap-5 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <article
+                key={index}
+                className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"
+              >
+                <div className="shimmer h-56 w-full" />
+                <div className="space-y-4 p-6">
+                  <div className="shimmer h-8 w-3/4 rounded-lg" />
+                  <div className="space-y-2">
+                    <div className="shimmer h-4 w-full rounded-md" />
+                    <div className="shimmer h-4 w-5/6 rounded-md" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="shimmer h-4 w-1/2 rounded-md" />
+                    <div className="shimmer h-4 w-2/5 rounded-md" />
+                    <div className="shimmer h-4 w-2/3 rounded-md" />
+                    <div className="shimmer h-4 w-1/3 rounded-md" />
+                  </div>
+                  <div className="shimmer h-12 w-full rounded-2xl" />
+                </div>
+              </article>
+            ))}
           </div>
         ) : actionError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
@@ -182,87 +346,137 @@ export default function EventsPage() {
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
             {error}
           </div>
-        ) : events.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-            No events available yet.
+            No events match your search.
           </div>
         ) : (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-4xl font-bold tracking-tight text-slate-900">Upcoming Events</h2>
-              <p className="mt-2 text-xl text-slate-600">Discover what&apos;s trending this month.</p>
-            </div>
+          <div className="grid gap-5 lg:grid-cols-3">
+            {filteredEvents.map((event) => {
+              const registered = isRegistered(event);
+              const eventDate = new Date(event.startDate);
+              const isBusy = activeEventId === event.id;
 
-            <div className="grid gap-5 lg:grid-cols-3">
-              {events.map((event) => (
-                <article
+              return (
+                <Link
                   key={event.id}
-                  className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"
+                  href={`/events/${event.id}`}
+                  className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition hover:shadow-md"
                 >
-                  <div className="relative h-56 w-full bg-slate-900">
+                  <div className="relative h-56 w-full overflow-hidden bg-slate-900">
+                    {registered ? (
+                      <span className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white shadow-sm">
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M8 12.5l2.5 2.5L16 9.5" />
+                        </svg>
+                        Registered
+                      </span>
+                    ) : null}
                     {event.imageUrl ? (
-                      <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover" />
+                      <img
+                        src={event.imageUrl}
+                        alt={event.title}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-linear-to-br from-indigo-700 via-violet-600 to-cyan-500 px-6 text-center text-2xl font-semibold text-white">
+                      <div className="flex h-full items-center justify-center bg-linear-to-br from-indigo-700 via-violet-600 to-cyan-500 px-6 text-center text-2xl font-semibold text-white transition duration-300 group-hover:scale-105">
                         {event.title}
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-4 p-6">
-                    <p className="inline-flex rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-indigo-700">
-                      Church event
-                    </p>
-                    <Link
-                      href={`/events/${event.id}`}
-                      className="block text-4xl font-bold tracking-tight text-slate-900 hover:text-indigo-700"
-                    >
+                    <h2 className="line-clamp-1 text-3xl font-bold tracking-tight text-slate-900">
                       {event.title}
-                    </Link>
+                    </h2>
 
-                    <p className="text-xl text-slate-600">
-                      {new Date(event.startDate).toLocaleDateString()} ·{" "}
-                      {new Date(event.startDate).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <p
+                      className="text-sm text-zinc-600"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {event.description || "No description provided."}
                     </p>
-                    {event.location ? <p className="text-xl text-slate-600">{event.location}</p> : null}
+
+                    <div className="space-y-2">
+                      <InfoRow
+                        icon={
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                        }
+                        text={eventDate.toLocaleDateString()}
+                      />
+                      <InfoRow
+                        icon={
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="9" />
+                            <polyline points="12 7 12 12 15 14" />
+                          </svg>
+                        }
+                        text={eventDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      />
+                      <InfoRow
+                        icon={
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                          </svg>
+                        }
+                        text={event.location || "No location"}
+                      />
+                      <InfoRow
+                        icon={
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                        }
+                        text={`${event.registrations?.length ?? 0} registered`}
+                      />
+                    </div>
 
                     {currentRole === "MEMBER" ? (
-                      isRegistered(event) ? (
-                        <div className="space-y-2">
-                          <button
-                            disabled
-                            className="h-12 w-full rounded-2xl border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-700"
-                          >
-                            Registered
-                          </button>
-                          <button
-                            onClick={() => handleUnregister(event)}
-                            disabled={activeEventId === event.id}
-                            className="h-12 w-full rounded-2xl border border-rose-200 bg-white text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {activeEventId === event.id ? "Unregistering..." : "Unregister"}
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleRegister(event.id)}
-                          disabled={activeEventId === event.id}
-                          className="h-12 w-full rounded-2xl bg-zinc-100 text-sm font-semibold text-slate-900 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {activeEventId === event.id ? "Registering..." : "Register here"}
-                        </button>
-                      )
+                      <button
+                        onClick={(clickEvent) => {
+                          clickEvent.preventDefault();
+                          if (registered) {
+                            handleUnregister(event);
+                          } else {
+                            handleRegister(event.id);
+                          }
+                        }}
+                        disabled={isBusy}
+                        className={`h-12 w-full rounded-2xl text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                          registered
+                            ? "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50"
+                            : "bg-slate-950 text-white hover:bg-slate-900"
+                        }`}
+                      >
+                        {isBusy ? (registered ? "Unregistering..." : "Registering...") : registered ? "Unregister" : "Register now"}
+                      </button>
                     ) : null}
-
-                    {event.description ? <p className="text-sm text-zinc-600">{event.description}</p> : null}
                   </div>
-                </article>
-              ))}
-            </div>
-          </section>
+                </Link>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

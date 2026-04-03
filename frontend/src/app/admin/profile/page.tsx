@@ -1,7 +1,6 @@
 "use client";
 
 import { ChangeEvent, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchJson } from "@/lib/api";
 import {
@@ -141,23 +140,17 @@ export default function AdminProfilePage() {
   };
 
   return (
-    <div className="min-h-full bg-zinc-50 px-4 py-10 sm:px-6 lg:px-12">
+    <div className="min-h-full bg-white px-4 py-10 sm:px-6 lg:px-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">
               Admin profile
             </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+            <h1 className="text-3xl font-normal tracking-tight text-zinc-900">
               Profile details
             </h1>
           </div>
-          <Link
-            href="/admin/dashboard"
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
-          >
-            Back to dashboard
-          </Link>
         </header>
 
         {error ? (
@@ -231,11 +224,28 @@ export default function AdminProfilePage() {
             </div>
           </section>
         ) : (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-            Loading profile...
-          </div>
+          <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="shimmer h-20 w-20 rounded-full" />
+                <div className="space-y-2">
+                  <div className="shimmer h-6 w-40 rounded-md" />
+                  <div className="shimmer h-4 w-24 rounded-md" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="shimmer h-9 w-32 rounded-md" />
+                <div className="shimmer h-9 w-32 rounded-md" />
+              </div>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="shimmer h-20 w-full rounded-xl" />
+              <div className="shimmer h-20 w-full rounded-xl" />
+            </div>
+          </section>
         )}
       </div>
     </div>
   );
 }
+

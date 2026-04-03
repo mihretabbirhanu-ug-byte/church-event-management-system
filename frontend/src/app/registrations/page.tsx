@@ -57,7 +57,7 @@ export default function RegistrationsPage() {
   const backLabel = currentRole === "ADMIN" ? "Back to dashboard" : "Back to events";
 
   return (
-    <div className="min-h-full bg-zinc-50 px-4 py-10 sm:px-6 lg:px-12">
+    <div className="min-h-full bg-white px-4 py-10 sm:px-6 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -68,12 +68,14 @@ export default function RegistrationsPage() {
               Event registrations
             </h1>
           </div>
-          <Link
-            href={backHref}
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
-          >
-            {backLabel}
-          </Link>
+          {currentRole !== "ADMIN" ? (
+            <Link
+              href={backHref}
+              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
+            >
+              {backLabel}
+            </Link>
+          ) : null}
         </header>
 
         <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
@@ -89,8 +91,18 @@ export default function RegistrationsPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-            Loading registrations...
+          <div className="grid gap-4 lg:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+                <div className="space-y-3">
+                  <div className="shimmer h-4 w-2/3 rounded-md" />
+                  <div className="shimmer h-4 w-1/3 rounded-md" />
+                  <div className="shimmer h-4 w-3/4 rounded-md" />
+                  <div className="shimmer h-4 w-3/4 rounded-md" />
+                  <div className="shimmer h-3 w-1/2 rounded-md" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">

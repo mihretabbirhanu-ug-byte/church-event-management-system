@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaskAssignment, Prisma } from '@prisma/client';
 
@@ -35,5 +35,17 @@ export class TaskAssignmentsService {
 
   async remove(id: string): Promise<TaskAssignment> {
     return this.prisma.taskAssignment.delete({ where: { id } });
+  }
+
+  async removeMine(taskId: string, userId: string): Promise<TaskAssignment> {
+    const assignment = await this.prisma.taskAssignment.findFirst({
+      where: { taskId, userId },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('You are not assigned to this task.');
+    }
+
+    return this.prisma.taskAssignment.delete({ where: { id: assignment.id } });
   }
 }

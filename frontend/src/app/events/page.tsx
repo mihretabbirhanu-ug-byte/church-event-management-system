@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { fetchJson } from "@/lib/api";
@@ -17,25 +17,14 @@ type EventItem = {
   registrations?: { id: string; userId: string }[];
 };
 
-function InfoRow({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function InfoRow({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-slate-700">
+    <div className="flex items-center gap-2 text-xs text-slate-700">
       <span className="text-slate-600">{icon}</span>
       <span>{text}</span>
     </div>
   );
 }
-
-
-
-
-
 
 export default function EventsPage() {
   const router = useRouter();
@@ -50,9 +39,6 @@ export default function EventsPage() {
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-
-
-  
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -71,8 +57,7 @@ export default function EventsPage() {
         });
         setEvents(data);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Unable to load events.";
+        const message = err instanceof Error ? err.message : "Unable to load events.";
         setError(message);
       } finally {
         setLoading(false);
@@ -133,8 +118,7 @@ export default function EventsPage() {
       });
       await refreshEvents(token);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to register for the event.";
+      const message = err instanceof Error ? err.message : "Unable to register for the event.";
       setActionError(message);
     } finally {
       setActiveEventId(null);
@@ -157,8 +141,7 @@ export default function EventsPage() {
       });
       await refreshEvents(token);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to unregister from this event.";
+      const message = err instanceof Error ? err.message : "Unable to unregister from this event.";
       setActionError(message);
     } finally {
       setActiveEventId(null);
@@ -167,69 +150,44 @@ export default function EventsPage() {
 
   const filteredEvents = useMemo(() => {
     const query = searchText.trim().toLowerCase();
-    const sourceEvents =
-      activeTab === "mine" ? events.filter((event) => isRegistered(event)) : events;
+    const sourceEvents = activeTab === "mine" ? events.filter((event) => isRegistered(event)) : events;
 
     if (!query) {
       return sourceEvents;
     }
 
     return sourceEvents.filter((event) => {
-      const haystack = [
-        event.title,
-        event.description ?? "",
-        event.location ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
+      const haystack = [event.title, event.description ?? "", event.location ?? ""].join(" ").toLowerCase();
       return haystack.includes(query);
     });
   }, [activeTab, events, searchText, currentUserId]);
 
-  const myEventsCount = useMemo(() => {
-    return events.filter((event) => isRegistered(event)).length;
-  }, [events, currentUserId]);
+  const myEventsCount = useMemo(() => events.filter((event) => isRegistered(event)).length, [events, currentUserId]);
 
   return (
     <div className="min-h-full bg-zinc-50">
       <div className="fixed inset-x-0 top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-328 items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white">
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="7" y1="10" x2="17" y2="10" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-semibold leading-tight text-zinc-900">
-                  Church Events
-                </p>
-                <p className="text-sm text-zinc-500">Community Event Portal</p>
-              </div>
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="7" y1="10" x2="17" y2="10" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-lg font-semibold leading-tight text-zinc-900">Church Events</p>
+              <p className="text-xs text-zinc-500">Community Event Portal</p>
             </div>
           </div>
 
-
-          
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/me"
-              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
-            >
+          <div className="flex items-center gap-2">
+            <Link href="/me" className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900">
               My profile
             </Link>
             <button
               onClick={handleSignOut}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+              className="rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800"
             >
               Sign out
             </button>
@@ -237,34 +195,19 @@ export default function EventsPage() {
         </div>
       </div>
 
-
-
-
-
-
-
-
-
-
-      <div className="mx-auto flex w-full max-w-328 flex-col gap-8 px-4 pb-10 pt-28 sm:px-6 lg:px-8">
-        <header className="space-y-5">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-10 pt-28 sm:px-6 lg:px-8">
+        <header className="space-y-4">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight text-zinc-900">
-              Upcoming Church Events
-            </h1>
-            <p className="mt-2 text-xl text-zinc-600">
-              Discover and register for exciting events happening at your church.
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Upcoming Church Events</h1>
+            <p className="mt-1 text-xs text-zinc-600">Discover and register for exciting events happening at your church.</p>
           </div>
 
           <div className="inline-flex rounded-2xl border border-zinc-200 bg-zinc-100 p-1.5">
             <button
               type="button"
               onClick={() => setActiveTab("all")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === "all"
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-600 hover:text-zinc-900"
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                activeTab === "all" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -277,10 +220,8 @@ export default function EventsPage() {
             <button
               type="button"
               onClick={() => setActiveTab("mine")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === "mine"
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-600 hover:text-zinc-900"
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                activeTab === "mine" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -292,16 +233,11 @@ export default function EventsPage() {
               {`My Events (${myEventsCount})`}
             </button>
           </div>
+
         </header>
 
         <div className="relative">
-          <svg
-            className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
+          <svg className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -309,20 +245,17 @@ export default function EventsPage() {
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Search events..."
-            className="h-12 w-full rounded-xl border border-zinc-200 bg-white pl-12 pr-4 text-sm text-zinc-900 outline-none ring-emerald-200 transition focus:ring-2"
+            className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-12 pr-4 text-sm text-zinc-900 outline-none ring-emerald-200 transition focus:ring-2"
           />
         </div>
 
         {loading ? (
           <div className="grid gap-5 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
-              <article
-                key={index}
-                className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"
-              >
+              <article key={index} className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
                 <div className="shimmer h-56 w-full" />
                 <div className="space-y-4 p-6">
-                  <div className="shimmer h-8 w-3/4 rounded-lg" />
+                  <div className="shimmer h-6 w-3/4 rounded-lg" />
                   <div className="space-y-2">
                     <div className="shimmer h-4 w-full rounded-md" />
                     <div className="shimmer h-4 w-5/6 rounded-md" />
@@ -333,23 +266,17 @@ export default function EventsPage() {
                     <div className="shimmer h-4 w-2/3 rounded-md" />
                     <div className="shimmer h-4 w-1/3 rounded-md" />
                   </div>
-                  <div className="shimmer h-12 w-full rounded-2xl" />
+                  <div className="shimmer h-11 w-full rounded-xl" />
                 </div>
               </article>
             ))}
           </div>
         ) : actionError ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
-            {actionError}
-          </div>
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">{actionError}</div>
         ) : error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
-            {error}
-          </div>
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">{error}</div>
         ) : filteredEvents.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-            No events match your search.
-          </div>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">No events match your search.</div>
         ) : (
           <div className="grid gap-5 lg:grid-cols-3">
             {filteredEvents.map((event) => {
@@ -358,21 +285,11 @@ export default function EventsPage() {
               const isBusy = activeEventId === event.id;
 
               return (
-                <Link
-                  key={event.id}
-                  href={`/events/${event.id}`}
-                  className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition hover:shadow-md"
-                >
+                <Link key={event.id} href={`/events/${event.id}`} className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition hover:shadow-md">
                   <div className="relative h-56 w-full overflow-hidden bg-slate-900">
                     {registered ? (
-                      <span className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white shadow-sm">
-                        <svg
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
+                      <span className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <circle cx="12" cy="12" r="9" />
                           <path d="M8 12.5l2.5 2.5L16 9.5" />
                         </svg>
@@ -380,25 +297,19 @@ export default function EventsPage() {
                       </span>
                     ) : null}
                     {event.imageUrl ? (
-                      <img
-                        src={event.imageUrl}
-                        alt={event.title}
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                      />
+                      <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-linear-to-br from-indigo-700 via-violet-600 to-cyan-500 px-6 text-center text-2xl font-semibold text-white transition duration-300 group-hover:scale-105">
+                      <div className="flex h-full items-center justify-center bg-linear-to-br from-indigo-700 via-violet-600 to-cyan-500 px-6 text-center text-xl font-semibold text-white transition duration-300 group-hover:scale-105">
                         {event.title}
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-4 p-6">
-                    <h2 className="line-clamp-1 text-3xl font-bold tracking-tight text-slate-900">
-                      {event.title}
-                    </h2>
+                    <h2 className="line-clamp-1 text-xl font-semibold tracking-tight text-slate-900">{event.title}</h2>
 
                     <p
-                      className="text-sm text-zinc-600"
+                      className="text-xs text-zinc-600"
                       style={{
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
@@ -412,7 +323,7 @@ export default function EventsPage() {
                     <div className="space-y-2">
                       <InfoRow
                         icon={
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <rect x="3" y="4" width="18" height="18" rx="2" />
                             <line x1="16" y1="2" x2="16" y2="6" />
                             <line x1="8" y1="2" x2="8" y2="6" />
@@ -423,7 +334,7 @@ export default function EventsPage() {
                       />
                       <InfoRow
                         icon={
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="9" />
                             <polyline points="12 7 12 12 15 14" />
                           </svg>
@@ -432,7 +343,7 @@ export default function EventsPage() {
                       />
                       <InfoRow
                         icon={
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1 1 18 0z" />
                             <circle cx="12" cy="10" r="3" />
                           </svg>
@@ -441,7 +352,7 @@ export default function EventsPage() {
                       />
                       <InfoRow
                         icon={
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                             <circle cx="9" cy="7" r="4" />
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -463,7 +374,7 @@ export default function EventsPage() {
                           }
                         }}
                         disabled={isBusy}
-                        className={`h-12 w-full rounded-2xl text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        className={`h-11 w-full rounded-xl text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                           registered
                             ? "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50"
                             : "bg-slate-950 text-white hover:bg-slate-900"

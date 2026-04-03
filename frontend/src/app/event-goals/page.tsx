@@ -186,12 +186,14 @@ export default function EventGoalsPage() {
               Goals for each event
             </h1>
           </div>
-          <Link
-            href={backHref}
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
-          >
-            {backLabel}
-          </Link>
+          {currentRole !== "ADMIN" ? (
+            <Link
+              href={backHref}
+              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
+            >
+              {backLabel}
+            </Link>
+          ) : null}
         </header>
 
         {currentRole === "ADMIN" ? (

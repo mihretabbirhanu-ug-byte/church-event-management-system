@@ -1,151 +1,172 @@
 "use client";
 
-import { getUser } from "@/lib/auth";
 import { fetchJson } from "@/lib/api";
-import { getToken, setUser as setStoredUser } from "@/lib/auth";
+import { getToken } from "@/lib/auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type NavItem = {
   label: string;
   href: string;
-  description: string;
-  badge?: string;
+  icon: React.ReactNode;
+};
+
+type EventItem = {
+  startDate: string;
 };
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", description: "Overview and stats" },
-  { label: "Create Event", href: "/admin/events", description: "Add a new church event" },
-  { label: "Manage Users", href: "/admin/users", description: "Assign volunteer roles" },
-  { label: "Assign Tasks", href: "/admin/assign-tasks", description: "Match volunteers to tasks" },
-  { label: "Event Goals", href: "/admin/event-goals", description: "Define event objectives" },
-  { label: "Event Notes", href: "/admin/event-notes", description: "Add internal event notes" },
-  { label: "Invite Links", href: "/admin/event-invite-links", description: "Generate invite links" },
-  { label: "Registrations", href: "/admin/registrations", description: "Track attendance status" },
+  {
+    label: "Overview",
+    href: "/admin/overview",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 12l9-9 9 9" />
+        <path d="M5 10v10h14V10" />
+      </svg>
+    ),
+  },
+  {
+    label: "Browse Events",
+    href: "/admin/browse-events",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    ),
+  },
+  {
+    label: "Manage Users",
+    href: "/admin/users",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+      </svg>
+    ),
+  },
+  {
+    label: "Tasks",
+    href: "/admin/tasks",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polyline points="9 11 12 14 22 4" />
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+    ),
+  },
+  {
+    label: "Invite Links",
+    href: "/admin/event-invite-links",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11 4" />
+        <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 1 0 7.07 7.07L13 19" />
+      </svg>
+    ),
+  },
+  {
+    label: "Registrations",
+    href: "/admin/registrations",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 2h12v20l-6-3-6 3V2z" />
+      </svg>
+    ),
+  },
 ];
-
-function initialsFromName(fullName: string) {
-  const parts = fullName.trim().split(/\s+/).slice(0, 2);
-  if (parts.length === 0) return "A";
-  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
-}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [user, setCurrentUser] = useState<ReturnType<typeof getUser> | null>(null);
+  const [activeEvents, setActiveEvents] = useState(0);
+  const [totalRegistrations, setTotalRegistrations] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    const localUser = getUser();
     const token = getToken();
-    setCurrentUser(localUser);
-
-    if (!localUser || !token) {
+    if (!token) {
+      setStatsLoading(false);
       return;
     }
 
-    fetchJson<NonNullable<ReturnType<typeof getUser>>>(`/users/${localUser.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((freshUser) => {
-        setCurrentUser(freshUser);
-        setStoredUser(freshUser);
-      })
-      .catch(() => {
-        // Keep local cached user if refresh fails.
-      });
-  }, []);
+    const loadSidebarStats = async () => {
+      try {
+        const [eventsData, registrationsData] = await Promise.all([
+          fetchJson<EventItem[]>("/events", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetchJson<unknown[]>("/registrations", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-  useEffect(() => {
-    const syncUser = () => {
-      setCurrentUser(getUser());
+        const now = Date.now();
+        setActiveEvents(eventsData.filter((event) => new Date(event.startDate).getTime() >= now).length);
+        setTotalRegistrations(registrationsData.length);
+      } catch {
+        setActiveEvents(0);
+        setTotalRegistrations(0);
+      } finally {
+        setStatsLoading(false);
+      }
     };
 
-    window.addEventListener("storage", syncUser);
-    window.addEventListener("profile-user-updated", syncUser as EventListener);
-    return () => {
-      window.removeEventListener("storage", syncUser);
-      window.removeEventListener("profile-user-updated", syncUser as EventListener);
-    };
+    loadSidebarStats();
   }, []);
-
-  const displayName = user?.fullName || "Ava Sinclair";
-  const roleName =
-    user?.role === "ADMIN"
-      ? "Admin"
-      : user?.role === "VOLUNTEER"
-      ? "Volunteer"
-      : user?.role === "MEMBER"
-      ? "Member"
-      : "Member";
-  const initials = useMemo(() => initialsFromName(displayName), [displayName]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 lg:grid lg:grid-cols-[320px_1fr]">
-      <aside className="border-r border-zinc-200 bg-zinc-50 p-5 lg:h-screen lg:overflow-y-auto">
-        <div className="rounded-2xl bg-linear-to-br from-indigo-900 via-blue-700 to-cyan-500 p-4 shadow-sm ring-1 ring-indigo-200/60">
-          <p className="bg-linear-to-r from-yellow-200 via-orange-100 to-white bg-clip-text text-3xl font-extrabold tracking-tight text-transparent">
-            Your Events
-          </p>
-          <p className="text-sm font-medium text-white/90">Admin Panel</p>
+    <div className="min-h-screen bg-white lg:grid lg:grid-cols-[220px_1fr]">
+      <aside className="border-r border-zinc-200 bg-white p-3 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+        <div className="px-2 py-2">
+          <h1 className="text-xl font-normal tracking-tight text-zinc-950">EventDash</h1>
+          <p className="text-xs text-zinc-500">Event Management Dashboard</p>
         </div>
 
-        <Link
-          href="/admin/profile"
-          className="mt-6 block rounded-xl border border-zinc-200 bg-white p-3 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-        >
-            <div className="flex items-center gap-3">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt={`${displayName} profile`}
-                className="h-11 w-11 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-linear-to-br from-orange-200 via-rose-300 to-fuchsia-400 text-sm font-bold text-white">
-                {initials}
-              </div>
-            )}
-            <div>
-              <p className="text-xl font-semibold leading-tight text-indigo-950">{displayName}</p>
-              <p className="text-sm text-zinc-500">{roleName}</p>
-            </div>
-          </div>
-        </Link>
-
-        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-          Main Menu
-        </p>
-
-        <nav className="mt-3 space-y-2">
+        <nav className="mt-5 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const isTasksItem = item.href === "/admin/tasks";
+            const isActive = isTasksItem
+              ? pathname === "/admin/tasks" ||
+                pathname.startsWith("/admin/tasks/") ||
+                pathname === "/admin/assign-tasks" ||
+                pathname.startsWith("/admin/assign-tasks/")
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`flex items-center justify-between rounded-xl px-4 py-3 transition ${
+                className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                   isActive
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                    ? "bg-slate-950 text-white"
+                    : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
                 }`}
               >
-                <div>
-                  <p className="text-base font-semibold">{item.label}</p>
-                  <p className="text-xs opacity-80">{item.description}</p>
-                </div>
-                {item.badge ? (
-                  <span className="rounded-full bg-orange-500 px-2 py-0.5 text-xs font-semibold text-white">
-                    {item.badge}
-                  </span>
-                ) : null}
+                {item.icon}
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
+
+        <section className="mt-6 rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-3">
+          <h2 className="text-xs font-semibold text-zinc-900">Quick Stats</h2>
+          <div className="mt-2 space-y-1.5 text-xs">
+            <div className="flex items-center justify-between text-zinc-600">
+              <span>Active Events</span>
+              <span className="font-semibold text-zinc-900">{statsLoading ? "-" : activeEvents}</span>
+            </div>
+            <div className="flex items-center justify-between text-zinc-600">
+              <span>Total Registrations</span>
+              <span className="font-semibold text-zinc-900">{statsLoading ? "-" : totalRegistrations}</span>
+            </div>
+          </div>
+        </section>
       </aside>
 
-      <main>{children}</main>
+      <main className="min-h-screen">{children}</main>
     </div>
   );
 }
+

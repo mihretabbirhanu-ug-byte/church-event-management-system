@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { fetchJson } from "@/lib/api";
 import { getToken, getUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 type User = {
   id: string;
@@ -12,6 +11,7 @@ type User = {
   email: string;
   phone: string;
   role: "ADMIN" | "MEMBER" | "VOLUNTEER";
+  createdAt: string;
 };
 
 export default function AdminUsersPage() {
@@ -19,8 +19,9 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [savingId, setSavingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"ALL" | User["role"]>("ALL");
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -52,6 +53,17 @@ export default function AdminUsersPage() {
     load();
   }, [router]);
 
+  const filteredUsers = users.filter((user) => {
+    const q = query.trim().toLowerCase();
+    const searchMatch =
+      !q ||
+      user.fullName.toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q) ||
+      user.phone.toLowerCase().includes(q);
+    const roleMatch = roleFilter === "ALL" ? true : user.role === roleFilter;
+    return searchMatch && roleMatch;
+  });
+
   const updateRole = async (userId: string, role: User["role"]) => {
     const token = getToken();
     if (!token) {
@@ -69,7 +81,7 @@ export default function AdminUsersPage() {
       setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Unable to update user.";
+        err instanceof Error ? err.message : "Unable to update user role.";
       setError(message);
     } finally {
       setSavingId(null);
@@ -77,35 +89,41 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="min-h-full bg-zinc-50 px-4 py-10 sm:px-6 lg:px-12">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-full bg-white px-4 py-4 sm:px-6 lg:px-12">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+        <header className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">
-              Admin users
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+            <h1 className="text-2xl font-normal tracking-tight text-zinc-900">
               Assign roles
             </h1>
           </div>
-          <Link
-            href="/admin/dashboard"
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-emerald-200 hover:text-emerald-700"
-          >
-            Back to dashboard
-          </Link>
         </header>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-            Search users
-          </label>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by name, email, or phone"
-            className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-          />
+        <div className="p-0">
+          <p className="mt-1 text-sm text-zinc-600">
+            Search and filter system users ({filteredUsers.length} user
+            {filteredUsers.length === 1 ? "" : "s"})
+          </p>
+          <div className="mt-4 flex flex-col gap-3 md:flex-row">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search by name, email, or phone"
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm md:flex-1"
+            />
+            <select
+              value={roleFilter}
+              onChange={(event) =>
+                setRoleFilter(event.target.value as "ALL" | User["role"])
+              }
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm md:w-52"
+            >
+              <option value="ALL">All Roles</option>
+              <option value="ADMIN">Admin</option>
+              <option value="MEMBER">Member</option>
+              <option value="VOLUNTEER">Volunteer</option>
+            </select>
+          </div>
         </div>
 
         {error ? (
@@ -115,53 +133,76 @@ export default function AdminUsersPage() {
         ) : null}
 
         {loading ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-            Loading users...
-          </div>
-        ) : (
           <div className="grid gap-4 lg:grid-cols-2">
-            {users
-              .filter((user) => {
-                const q = query.trim().toLowerCase();
-                if (!q) return true;
-                return (
-                  user.fullName.toLowerCase().includes(q) ||
-                  user.email.toLowerCase().includes(q) ||
-                  user.phone.toLowerCase().includes(q)
-                );
-              })
-              .map((user) => (
-              <div
-                key={user.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
-              >
-                <p className="text-lg font-semibold text-zinc-900">
-                  {user.fullName}
-                </p>
-                <p className="mt-1 text-sm text-zinc-600">{user.email}</p>
-                <p className="mt-1 text-sm text-zinc-600">{user.phone}</p>
-                <div className="mt-4 flex items-center gap-3">
-                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
-                    Role
-                  </label>
-                  <select
-                    value={user.role}
-                    onChange={(event) =>
-                      updateRole(user.id, event.target.value as User["role"])
-                    }
-                    className="rounded-lg border border-zinc-200 bg-white px-3 py-1 text-sm"
-                    disabled={savingId === user.id}
-                  >
-                    <option value="MEMBER">MEMBER</option>
-                    <option value="VOLUNTEER">VOLUNTEER</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+                <div className="space-y-3">
+                  <div className="shimmer h-6 w-1/2 rounded-md" />
+                  <div className="shimmer h-4 w-2/3 rounded-md" />
+                  <div className="shimmer h-4 w-1/3 rounded-md" />
+                  <div className="shimmer h-8 w-40 rounded-md" />
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-zinc-50">
+                  <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-[0.12em] text-zinc-500">
+                    <th className="px-5 py-3">Name</th>
+                    <th className="px-5 py-3">Email</th>
+                    <th className="px-5 py-3">Phone</th>
+                    <th className="px-5 py-3">Role</th>
+                    <th className="px-5 py-3">Date Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td className="px-5 py-6 text-zinc-600" colSpan={5}>
+                        No users found for your search/filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <tr key={user.id} className="border-b border-zinc-100 last:border-b-0">
+                        <td className="px-5 py-4 text-zinc-900">{user.fullName}</td>
+                        <td className="px-5 py-4 text-zinc-700">{user.email}</td>
+                        <td className="px-5 py-4 text-zinc-700">{user.phone}</td>
+                        <td className="px-5 py-4 text-zinc-900">
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={user.role}
+                              onChange={(event) =>
+                                updateRole(user.id, event.target.value as User["role"])
+                              }
+                              className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-sm"
+                              disabled={savingId === user.id}
+                            >
+                              <option value="ADMIN">ADMIN</option>
+                              <option value="MEMBER">MEMBER</option>
+                              <option value="VOLUNTEER">VOLUNTEER</option>
+                            </select>
+                            {savingId === user.id ? (
+                              <span className="text-xs text-zinc-500">Saving...</span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-zinc-700">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 }
+

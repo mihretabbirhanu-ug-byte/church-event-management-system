@@ -330,8 +330,8 @@ export default function AdminBrowseEventsPage() {
                   <div className="space-y-2 pt-1">
                     <Link
                       href={`/admin/event-details/${event.id}`}
-                      //className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-900"
-                      className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-white border border-black px-4 text-sm font-semibold text-black hover:bg-gray-100"
+                      className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-900"
+                      //className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-white border border-black px-4 text-sm font-semibold text-black hover:bg-gray-100"
                     >
                       Open details
                     </Link>
@@ -339,7 +339,8 @@ export default function AdminBrowseEventsPage() {
                       <button
                         type="button"
                         onClick={() => handleEdit(event)}
-                        className="h-10 rounded-lg bg-white border border-black px-3 text-xs font-semibold text-black hover:bg-gray-100"
+                        //className="h-10 rounded-lg bg-white border border-black px-3 text-xs font-semibold text-black hover:bg-gray-100"
+                        className="h-10 rounded-lg bg-slate-950 px-3 text-xs font-semibold text-white hover:bg-slate-900"
                       >
                         Edit
                       </button>

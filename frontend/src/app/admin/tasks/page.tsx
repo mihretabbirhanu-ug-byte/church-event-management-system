@@ -330,7 +330,7 @@ export default function AdminTasksPage() {
               No tasks available.
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6">
               {items.map((task) => {
                 const assignedIds = new Set((task.assignments ?? []).map((assignment) => assignment.userId));
                 return (
@@ -489,7 +489,7 @@ export default function AdminTasksPage() {
                 No tasks found.
               </div>
             ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4">
                 {items.map((task) => (
                   <div key={task.id} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
                     {editingId === task.id ? (

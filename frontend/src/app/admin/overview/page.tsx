@@ -259,7 +259,7 @@ export default function AdminOverviewPage() {
         <header className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-normal tracking-tight text-zinc-950">Dashboard Overview</h1>
-            <p className="mt-2 text-base text-zinc-600">Welcome back! Here's what's happening with your events.</p>
+            <p className="mt-2 text-base text-zinc-600">Welcome back!  Here's what's happening with your events.</p>
           </div>
           <Link
             href="/admin/profile"
